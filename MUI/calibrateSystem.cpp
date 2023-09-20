@@ -536,7 +536,7 @@ int main(int argc, char **argv)
                         vpDisplay::displayCharString(I,22*(float)I.getWidth()/640.0f,10,
                                                          "A right click to directly jump to the next image.",
                                                          vpColor(0, 255, 0));
-                        
+                        vpDisplay::flush(I);
                         
                         /////////////////////////////////////////////////////
                         //boucler sur les 4+ points init a detecter
@@ -545,6 +545,7 @@ int main(int argc, char **argv)
 												vpMouseButton::vpMouseButtonType btn;
                         for(unsigned int curPt = 0; curPt < 4 ; curPt++)
                         {
+                        		std::cout << "please click on point of indexes -> X: " << interf.pm.pointsGrilleRef[curPt][0] << " Y: " << interf.pm.pointsGrilleRef[curPt][1] << " Z: " << interf.pm.pointsGrilleRef[curPt][2] << std::endl; 
                             vpDisplay::getClick(I,ip, btn);
                             if(btn != vpMouseButton::button1)
                             {
