@@ -679,10 +679,10 @@ int CInterface::preCalib(int icam, int numImage)
     try
     {    
     	//Initialisation de la pose, par une méthode linéaire généralement
-			if(nbPlansMires == 1)
+			//if(nbPlansMires == 1) //imposing the four not ignored target points are on the same plane, this test is not necessary
 	    	pose->poseInit(cMo, curCam);
-			else
-				cMo[2][3] = 0.01;
+			//else
+			//	cMo[2][3] = 0.01;
 
 			cMo.print();
 		  //Optimisation de la pose par VVS

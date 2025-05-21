@@ -588,7 +588,7 @@ CMire::initTrackingNoDisplay(vpImage<unsigned char>& I, CModel *cam, vpHomogeneo
 		valid = true;
 		P.changeFrame(cMo);
 		
-		if(false)//P.get_Z() < 0)
+		if(P.get_Z() < 0) //(false)// false only relevant to OCamCalib's dataset images
 			valid = false;
 		else
 		{

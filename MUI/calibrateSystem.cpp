@@ -1,6 +1,7 @@
 #include <MIXEDVISION/commun.h>
 #include <MINTERFACE/CInterface.h>
 
+#include <cmath>
 #include <visp/vpConfig.h>
 //#include <visp/vpDebug.h>
 #include <visp/vpParseArgv.h>
@@ -34,10 +35,22 @@
 //#define OOO
 //#define FEP
 //#define P
-#define P_alldist
+//#define P_alldist
+//#define P_alldistx2
 
 //#define O
+//#define Fe
 //#define FOO
+
+#define dualF
+// dualF implies multi-plane calibration target but we use three possible configurations
+// One has 6 "planes" as two half-cubes side by side (see Caron et al. @ ICRA18)
+//#define MULTIPLANE6
+// Another has 2 planes parallel distant (see Duvinage et al. 2024) 
+//#define MULTIPLANE2
+// A third one has 5 planes as a single cube (roughly) except one face (see ?? 2025)
+#define MULTIPLANE5
+
 
 void usage( char *name, char *badparam, std::string ipath, std::string ppath,
 		   double gray, unsigned first, unsigned nimages, unsigned step, double lambda);
@@ -70,8 +83,11 @@ int main(int argc, char **argv)
 	unsigned int winu, winv;
     
     int fact;
+
+    int nbPtClick = 4; //default
+    int ptIgnores = 0;
 	
-	winu = winv = 10;//5;//33;//3; //15;//24;//9;//13;//11;//33;//6;
+	winu = winv = 3;//5;//33;//3; //15;//24;//9;//13;//11;//33;//6;
 	
 	///////////////////////////////////////////
 	//---------COMMAND LINE--------------------
@@ -104,26 +120,45 @@ int main(int argc, char **argv)
 	{
 		case 0 :
 			mt = MIRE_DOTS;
-
+            /*
 			pointsGrilleRef[0][0] = 1; pointsGrilleRef[0][1] = 1; pointsGrilleRef[0][2] = 0;
 			pointsGrilleRef[1][0] = 1; pointsGrilleRef[1][1] = 4; pointsGrilleRef[1][2] = 0;
 			pointsGrilleRef[2][0] = 3; pointsGrilleRef[2][1] = 4; pointsGrilleRef[2][2] = 0;
 			pointsGrilleRef[3][0] = 4; pointsGrilleRef[3][1] = 1; pointsGrilleRef[3][2] = 0;
 			
 			mp = ParamMire(0.03, 0.03, 0.0, 6, 6, 1, (int **)pointsGrilleRef);
+			*/
+            //for dualF 5
+			/*pointsGrilleRef[0][0] = 0; pointsGrilleRef[0][1] = 0; pointsGrilleRef[0][2] = 0;
+			pointsGrilleRef[1][0] = 0; pointsGrilleRef[1][1] = 5; pointsGrilleRef[1][2] = 0;
+			pointsGrilleRef[2][0] = 5; pointsGrilleRef[2][1] = 5; pointsGrilleRef[2][2] = 0;
+			pointsGrilleRef[3][0] = 5; pointsGrilleRef[3][1] = 0; pointsGrilleRef[3][2] = 0;*/
+            pointsGrilleRef[0][0] = 0; pointsGrilleRef[0][1] = 0; pointsGrilleRef[0][2] = 0;
+			pointsGrilleRef[1][0] = 0; pointsGrilleRef[1][1] = 5; pointsGrilleRef[1][2] = 0;
+			pointsGrilleRef[2][0] = 3; pointsGrilleRef[2][1] = 5; pointsGrilleRef[2][2] = 0;
+			pointsGrilleRef[3][0] = 5; pointsGrilleRef[3][1] = 5; pointsGrilleRef[3][2] = 0;
 			
+			mp = ParamMire(0.03, 0.03, 0.0, 6, 6, 1, (int **)pointsGrilleRef);
 			break;
 		case 1 :
 			mt = MIRE_CORNERS;
-
-			pointsGrilleRef[0][0] = 1; pointsGrilleRef[0][1] = 1; pointsGrilleRef[0][2] = 0;
-			pointsGrilleRef[1][0] = 1; pointsGrilleRef[1][1] = 4; pointsGrilleRef[1][2] = 0;
-			pointsGrilleRef[2][0] = 3; pointsGrilleRef[2][1] = 4; pointsGrilleRef[2][2] = 0;
-			pointsGrilleRef[3][0] = 4; pointsGrilleRef[3][1] = 1; pointsGrilleRef[3][2] = 0;
+/*
+			pointsGrilleRef[0][0] = 0; pointsGrilleRef[0][1] = 0; pointsGrilleRef[0][2] = 0;
+			pointsGrilleRef[1][0] = 5; pointsGrilleRef[1][1] = 0; pointsGrilleRef[1][2] = 0;
+			pointsGrilleRef[2][0] = 9; pointsGrilleRef[2][1] = 0; pointsGrilleRef[2][2] = 0;
+			pointsGrilleRef[3][0] = 9; pointsGrilleRef[3][1] = 7; pointsGrilleRef[3][2] = 0;
 			
 			//mp = ParamMire(0.07, 0.07, 0.0, 5, 3, 1, (int **)pointsGrilleRef);
-			mp = ParamMire(0.117, 0.117, 0.0, 8, 6, 1, (int **)pointsGrilleRef);
-			
+			//mp = ParamMire(0.117, 0.117, 0.0, 8, 6, 1, (int **)pointsGrilleRef);
+            mp = ParamMire(0.025, 0.025, 0.0, 10, 8, 1, (int **)pointsGrilleRef);
+*/			
+            pointsGrilleRef[0][0] = 0; pointsGrilleRef[0][1] = 0; pointsGrilleRef[0][2] = 0;
+			pointsGrilleRef[1][0] = 0; pointsGrilleRef[1][1] = 5; pointsGrilleRef[1][2] = 0;
+			pointsGrilleRef[2][0] = 4; pointsGrilleRef[2][1] = 5; pointsGrilleRef[2][2] = 0;
+			pointsGrilleRef[3][0] = 7; pointsGrilleRef[3][1] = 5; pointsGrilleRef[3][2] = 0;
+
+            mp = ParamMire(0.03, 0.03, 0.0, 8, 6, 1, (int **)pointsGrilleRef);
+
 			break;
 		case 2 :
 			mt = MIRE_RINGS;
@@ -141,10 +176,79 @@ int main(int argc, char **argv)
 			break;
 	}
 
-	//interf.setTypeMire(mt);//, mp); // in case the calibration target is defined in the ParametresMire*.txt file in the directory containing CalibrateSystem
-	interf.setTypeMire(mt, mp); // in case the calibration target is fully defined in the c++ code
+
+	interf.setTypeMire(mt);//, mp); // in case the calibration target is defined in the ParametresMire*.txt file in the directory containing CalibrateSystem
+	//interf.setTypeMire(mt, mp); // in case the calibration target is fully defined in the c++ code
+#ifdef dualF
+    #ifdef MULTIPLANE2
+    //first target is already there with setTypeMire and the origin of the calibration object coordinates system
+
+    //second target is expressed with respect to the first target origin
+    PoseVector mirePose[2];
+    mirePose[1][0] = 0.0; // t_X
+    mirePose[1][1] = 0.0; // t_Y
+    mirePose[1][2] = 0.567;//0.6; // t_Z
+    mirePose[1][3] = 0.0; // \theta w_X
+    mirePose[1][4] = 0.0; // \theta w_Y
+    mirePose[1][5] = 0.0; // \theta w_Z
+    interf.addMire(mt, mp, mirePose[1]);
+
+    nbPtClick *= 2; // assuming it was still 4 before
+
+    #elif defined(MULTIPLANE5)
+    //first target is already there with setTypeMire and the origin of the calibration object coordinates system
+    unsigned nbPtClick_single = nbPtClick;
+    //second target is expressed with respect to the first target origin
+    PoseVector mirePose[5];
+    mirePose[1][0] = 0.0; // t_X
+    mirePose[1][1] = -0.03; // t_Y
+    mirePose[1][2] = 0.03;//0.6; // t_Z
+    mirePose[1][3] = M_PI_2; // \theta w_X
+    mirePose[1][4] = 0.0; // \theta w_Y
+    mirePose[1][5] = 0.0; // \theta w_Z
+    interf.addMire(mt, mp, mirePose[1]); //to do: recup mp from file
+
+    nbPtClick += nbPtClick_single; // assuming same number of points to click for each plane
+
+    mirePose[2][0] = -0.03; // t_X
+    mirePose[2][1] = 0.0; // t_Y
+    mirePose[2][2] = 0.03;//0.6; // t_Z
+    mirePose[2][3] = 0.0; // \theta w_X
+    mirePose[2][4] = -M_PI_2; // \theta w_Y
+    mirePose[2][5] = 0.0; // \theta w_Z
+    interf.addMire(mt, mp, mirePose[2]);
+
+    nbPtClick += nbPtClick_single; // assuming same number of points to click for each plane
+
+    mirePose[3][0] = 0.0; // t_X
+    mirePose[3][1] = 0.09; // for dots // 0.154; // for chess // // t_Y
+    mirePose[3][2] = 0.31; //for dots //0.365; // for chess // // t_Z
+    mirePose[3][3] = 0.0; // \theta w_X
+    mirePose[3][4] = 0.0; // \theta w_Y
+    mirePose[3][5] = 0.0; // \theta w_Z
+    interf.addMire(mt, mp, mirePose[3]);
+
+    nbPtClick += nbPtClick_single; // assuming same number of points to click for each plane
+
+    mirePose[4][0] = 0.0; // t_X
+    mirePose[4][1] = 0.27; //for dots // 0.334; // for chess // // t_Y
+    mirePose[4][2] = 0.28; // for dots // 0.335; // for chess // // t_Z
+    mirePose[4][3] = -M_PI_2; // \theta w_X
+    mirePose[4][4] = 0.0; // \theta w_Y
+    mirePose[4][5] = 0.0; // \theta w_Z
+    interf.addMire(mt, mp, mirePose[4]);
+
+    nbPtClick += nbPtClick_single; // assuming same number of points to click for each plane
+
+    #elif defined(MULTIPLANE6)
+
+    #endif
+#endif
+
+
 	interf.unsetFOO();
 	interf.setGrayLevelPrecision(opt_gray);	
+
 #ifdef O
 	interf.addCamera(Omni);
     interf.setActiveDistorsionParameters(0, false, false, false, false, false);
@@ -163,7 +267,28 @@ int main(int argc, char **argv)
     nomsFichiersToutesCameras.push_back(nomsFichiers);
 	interf.setListImages(nomsFichiers, 0);
 	
-	interf.setInitBaseIntrinsicParameters(0, 250, 250, 512, 384);
+	//interf.setInitBaseIntrinsicParameters(0, 250, 250, 512, 384);
+	
+#endif
+#ifdef Fe
+	interf.addCamera(Fisheye);
+    interf.setActiveDistorsionParameters(0, false, false, false, false, false);
+	
+	std::vector<std::string> nomsFichiers;
+	std::vector< std::vector<std::string> > nomsFichiersToutesCameras;
+	std::ostringstream s;
+	for (int iter = opt_first; iter < (opt_first+opt_nimages); iter++)
+	{
+		s.str("");
+		s << "grid36-" << std::setw(2) << std::setfill('0') << iter<< ".png" ;//".pgm";
+		filename = opt_ppath + s.str();
+		
+		nomsFichiers.push_back(filename);
+	}
+    nomsFichiersToutesCameras.push_back(nomsFichiers);
+	interf.setListImages(nomsFichiers, 0);
+	
+	//interf.setInitBaseIntrinsicParameters(0, 250, 250, 512, 384);
 	
 #endif
 #ifdef PO
@@ -363,9 +488,67 @@ int main(int argc, char **argv)
 	interf.setListImages(nomsFichiers, 1);
 	
 #endif
+#ifdef dualF
+    //add two Barreto-fisheye cameras 
+    //interf.addCamera(Fisheye);
+	//interf.addCamera(Fisheye);
+    interf.addCamera(Omni);
+    interf.addCamera(Omni);
+
+    //set relative rotation only to force a common single viewpoint
+    //interf.setActiveExtrinsicParameters(1, false, false, false, true, true, true);
+    //interf.setActiveExtrinsicParameters(1, false, false, false, false, true, false);
+    //interf.setActiveExtrinsicParameters(1, false, false, true, false, true, false);
+    //interf.setInitExtrinsicParameters(1, 0, 0, 0, 0, -M_PI, 0);
+    
+    //In case the two fisheyes are in the same image
+    //when images are 1280x640
+    //interf.setInitBaseIntrinsicParameters(0, 360, 360, 960, 320);
+    //interf.setInitBaseIntrinsicParameters(1, 360, 360, 320, 320);
+    //when images are 1024x512
+    //interf.setInitBaseIntrinsicParameters(0, 256, 256, 768, 256);
+    //interf.setInitBaseIntrinsicParameters(1, 256, 256, 256, 256);
+    //when images are 1440x720
+    //interf.setInitBaseIntrinsicParameters(0, 360, 360, 1080, 360);
+    //interf.setInitBaseIntrinsicParameters(1, 360, 360, 360, 360);
+
+    //interf.setActiveDistorsionParameters(0, false, false, false, true, true);
+    //interf.setActiveDistorsionParameters(1, false, false, false, true, true);
+
+	std::vector< std::string > nomsFichiers;
+	std::vector< std::vector<std::string> > nomsFichiersToutesCameras;
+	std::ostringstream s;
+	int icam = 0;
+    //set image filenames for the first camera
+	for (int iter = opt_first; iter < (opt_first+opt_nimages); iter++)
+	{
+		s.str("");
+		s << "grid36-" << std::setw(2) << std::setfill('0') << icam+1 << "-" << std::setw(2) << std::setfill('0') << iter<< ".pgm";
+		filename = opt_ppath + s.str();
+		
+		nomsFichiers.push_back(filename);
+	}
+    nomsFichiersToutesCameras.push_back(nomsFichiers);
+	interf.setListImages(nomsFichiers, 0);
+	
+	icam = 1;
+	nomsFichiers.clear();
+    //set image filenames for the second camera
+	for (int iter = opt_first; iter < (opt_first+opt_nimages); iter++)
+	{
+		s.str("");
+		s << "grid36-" << std::setw(2) << std::setfill('0') << icam+1 << "-" << std::setw(2) << std::setfill('0') << iter<< ".pgm";
+		filename = opt_ppath + s.str();
+		
+		nomsFichiers.push_back(filename);
+	}
+    nomsFichiersToutesCameras.push_back(nomsFichiers);
+	interf.setListImages(nomsFichiers, 1);
+#endif
 #ifdef P
 	interf.addCamera(Persp);
 //    interf.setActiveDistorsionParameters(0, true, false, false, false, false);
+//	interf.setInitBaseIntrinsicParameters(0, 500, 500, 540, 400);
 	
 	std::vector<std::string> nomsFichiers;
 	std::vector< std::vector<std::string> > nomsFichiersToutesCameras;
@@ -392,13 +575,48 @@ int main(int argc, char **argv)
 	for (int iter = opt_first; iter < (opt_first+opt_nimages); iter++)
 	{
 		s.str("");
-		s << "grid36-" << std::setw(2) << std::setfill('0') << iter<< ".png";
+		s << "grid36-" << std::setw(2) << std::setfill('0') << iter<< ".pgm";
 		filename = opt_ppath + s.str();
 		
 		nomsFichiers.push_back(filename);
 	}
     nomsFichiersToutesCameras.push_back(nomsFichiers);
 	interf.setListImages(nomsFichiers, 0);
+#endif
+
+#ifdef P_alldistx2
+	interf.addCamera(Persp);
+  interf.setActiveDistorsionParameters(0, true, true, true, true, true);
+	interf.addCamera(Persp);
+	interf.setActiveDistorsionParameters(1, true, true, true, true, true);
+	
+	std::vector<std::string> nomsFichiers;
+	std::vector< std::vector<std::string> > nomsFichiersToutesCameras;
+	std::ostringstream s;
+	int icam = 0;
+	for (int iter = opt_first; iter < (opt_first+opt_nimages); iter++)
+	{
+		s.str("");
+		s << "grid36-" << std::setw(2) << std::setfill('0') << icam+1 << "-" << std::setw(2) << std::setfill('0') << iter<< ".pgm";
+		filename = opt_ppath + s.str();
+		
+		nomsFichiers.push_back(filename);
+	}
+    nomsFichiersToutesCameras.push_back(nomsFichiers);
+	interf.setListImages(nomsFichiers, 0);
+	
+	icam = 1;
+	nomsFichiers.clear();
+	for (int iter = opt_first; iter < (opt_first+opt_nimages); iter++)
+	{
+		s.str("");
+		s << "grid36-" << std::setw(2) << std::setfill('0') << icam+1 << "-" << std::setw(2) << std::setfill('0') << iter<< ".pgm";
+		filename = opt_ppath + s.str();
+		
+		nomsFichiers.push_back(filename);
+	}
+    nomsFichiersToutesCameras.push_back(nomsFichiers);
+	interf.setListImages(nomsFichiers, 1);
 #endif
 	
 #ifdef FOO
@@ -534,7 +752,8 @@ int main(int argc, char **argv)
                                                      vpColor(0, 255, 0));
 
                         vpDisplay::displayCharString(I,22*(float)I.getWidth()/640.0f,10,
-                                                         "A right click to directly jump to the next image.",
+                                                         //"A right click to directly jump to the next image.",
+                                                         "A right click to ignore a point.",
                                                          vpColor(0, 255, 0));
                         vpDisplay::flush(I);
                         
@@ -543,24 +762,44 @@ int main(int argc, char **argv)
                         vpImagePoint ip;
                         s_SImagePoint impo;
 												vpMouseButton::vpMouseButtonType btn;
-                        for(unsigned int curPt = 0; curPt < 4 ; curPt++)
+                        //for(unsigned int curPt = 0; curPt < 4 ; curPt++)
+                        unsigned int curPt = 0;
+                        ptIgnores = 0;
+                        interf.mireinit.pointsref.front();
+                        while(curPt < (nbPtClick-ptIgnores))
                         {
-                        		std::cout << "please click on point of indexes -> X: " << interf.pm.pointsGrilleRef[curPt][0] << " Y: " << interf.pm.pointsGrilleRef[curPt][1] << " Z: " << interf.pm.pointsGrilleRef[curPt][2] << std::endl; 
+                            std::cout << "please click on point of indexes -> X: " << interf.mireinit.pointsref.value().get_oX() << " Y: " << interf.mireinit.pointsref.value().get_oY() << " Z: " << interf.mireinit.pointsref.value().get_oZ() << std::endl; 
                             vpDisplay::getClick(I,ip, btn);
-                            if(btn != vpMouseButton::button1)
+                            if(btn != vpMouseButton::button1) //if not left click
                             {
-                            	retour = 12;
-                            	break;
+                                if(btn == vpMouseButton::button3) //if right click
+                                {
+                                    retour = interf.ignorerUnDesPoints(icam, im, curPt);
+                                    std::cout << "point " << curPt+ptIgnores << " ignored" << std::endl;
+                                    ptIgnores++;
+                                }
+                                else
+                                {
+                                    //otherwise (middle click), jump to the next image
+                                    retour = 12;
+                                    break;
+                                }
                             }
-                            impo.u = ip.get_u();
-                            impo.v = ip.get_v();
-                            retour = interf.detectionDUnDesPoints(icam, im, curPt, impo);
-                            if(retour)
-                                break;
-                            
-														ip.set_uv(impo.u, impo.v);
-                            vpDisplay::displayCross(I, ip, 10, vpColor(255, 0, 0), fact);
-                            vpDisplay::flush(I);
+                            else
+                            {
+                                impo.u = ip.get_u();
+                                impo.v = ip.get_v();
+                                retour = interf.detectionDUnDesPoints(icam, im, curPt, impo);
+                                if(retour)
+                                    break;
+                                
+                                                            ip.set_uv(impo.u, impo.v);
+                                vpDisplay::displayCross(I, ip, 10, vpColor(255, 0, 0), fact);
+                                vpDisplay::flush(I);
+
+                                curPt++;
+                            }
+                            interf.mireinit.pointsref.next();
                         }
                         if(retour)
                             break;

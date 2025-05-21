@@ -31,7 +31,7 @@ ENDFOREACH(header)
 #----------------------------------------------------------------------
 # Create a top level rule to copy all the headers from src to include/ORFCV
 #----------------------------------------------------------------------
-ADD_CUSTOM_TARGET(header ALL
+ADD_CUSTOM_TARGET(mpheader ALL
   DEPENDS ${HEADER_IN_INCLUDE_DIR}
   )
 
@@ -45,7 +45,7 @@ ADD_LIBRARY (${MPOSE_INTERN_LIBS} SHARED
   ) 
 
 # create the headers in include/ORFCV before compiling the lib
-ADD_DEPENDENCIES(${MPOSE_INTERN_LIBS} header)
+ADD_DEPENDENCIES(${MPOSE_INTERN_LIBS} mpheader)
 
 TARGET_LINK_LIBRARIES(${MPOSE_INTERN_LIBS} MGEOMETRY)
 

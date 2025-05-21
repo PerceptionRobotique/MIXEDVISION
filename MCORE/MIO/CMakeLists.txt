@@ -31,7 +31,7 @@ ENDFOREACH(header)
 #----------------------------------------------------------------------
 # Create a top level rule to copy all the headers from src to include/ORFCV
 #----------------------------------------------------------------------
-ADD_CUSTOM_TARGET(header ALL
+ADD_CUSTOM_TARGET(mioheader ALL
   DEPENDS ${HEADER_IN_INCLUDE_DIR}
   )
 
@@ -45,7 +45,7 @@ ADD_LIBRARY (${MIO_INTERN_LIBS} SHARED
   ) 
 
 # create the headers in include/ORFCV before compiling the lib
-ADD_DEPENDENCIES(${MIO_INTERN_LIBS} header MGEOMETRY)
+ADD_DEPENDENCIES(${MIO_INTERN_LIBS} mioheader MGEOMETRY)
 
 TARGET_LINK_LIBRARIES(${MIO_INTERN_LIBS} MGEOMETRY)
 
